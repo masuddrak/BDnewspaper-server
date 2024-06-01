@@ -84,12 +84,32 @@ async function run() {
       const result = await allNewsCollection.insertOne(news)
       res.send(result)
     })
-    // get all news
-    app.get("/all-articles",async(req,res)=>{
-      const result=await allNewsCollection.find().toArray()
+    // get all articel
+    app.get("/all-articles", async (req, res) => {
+      const result = await allNewsCollection.find().toArray()
       res.send(result)
     })
-
+    // get a articel
+    app.get("/article-details/:id", async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const result = await allNewsCollection.findOne(query)
+      res.send(result)
+    })
+    app.patch("/add-count/:id", async (req, res) => {
+      const id = req.params.id
+      const articel=req.body
+      const totalCount=req.body.viewCount+1
+      const query = { _id: new ObjectId(id) }
+      
+      const upadteDoc={
+        $set:{
+          viewCount:totalCount
+        }
+      }
+      const result = await allNewsCollection.updateOne(query, upadteDoc);
+      res.send(result)
+    })
 
 
 
