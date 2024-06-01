@@ -47,6 +47,8 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    // all collection
+    const allNewsCollection = client.db("Newspaper").collection("news");
     // auth related api
     app.post('/jwt', async (req, res) => {
       const user = req.body
@@ -76,6 +78,25 @@ async function run() {
         res.status(500).send(err)
       }
     })
+    // all news route
+    app.post("/add-news",async(req,res)=>{
+      const news=req.body
+      const result=await allNewsCollection.insertOne(news)
+      res.send(result)
+    })
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 })
@@ -89,7 +110,7 @@ async function run() {
 run().catch(console.dir)
 
 app.get('/', (req, res) => {
-  res.send('Hello from StayVista Server..')
+  res.send('Hello from Newspaper..')
 })
 
 app.listen(port, () => {
