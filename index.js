@@ -79,12 +79,16 @@ async function run() {
       }
     })
     // all news route
-    app.post("/add-news",async(req,res)=>{
-      const news=req.body
-      const result=await allNewsCollection.insertOne(news)
+    app.post("/add-news", async (req, res) => {
+      const news = req.body
+      const result = await allNewsCollection.insertOne(news)
       res.send(result)
     })
-
+    // get all news
+    app.get("/all-articles",async(req,res)=>{
+      const result=await allNewsCollection.find().toArray()
+      res.send(result)
+    })
 
 
 
