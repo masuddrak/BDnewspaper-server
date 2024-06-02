@@ -97,44 +97,72 @@ async function run() {
       const result = await allNewsCollection.findOne(query)
       res.send(result)
     })
+    // my-articles articel
+    app.get("/my-articles/:email", async (req, res) => {
+      const email = req.params.email
+      const query = { "userInfo.email": email }
+      const result = await allNewsCollection.find(query).toArray()
+      res.send(result)
+    })
     // increment view count
     app.patch("/add-count/:id", async (req, res) => {
       const id = req.params.id
-      const articel=req.body
-      const totalCount=req.body.viewCount+1
+      const articel = req.body
+      const totalCount = req.body.viewCount + 1
       const query = { _id: new ObjectId(id) }
-      
-      const upadteDoc={
-        $set:{
-          viewCount:totalCount
+
+      const upadteDoc = {
+        $set: {
+          viewCount: totalCount
         }
       }
       const result = await allNewsCollection.updateOne(query, upadteDoc);
       res.send(result)
     })
 
- // add user db
- app.put("/user", async (req, res) => {
-  const user = req.body
-  const filter = { email: user?.email }
-  // check already exist user
-  const existUser = await usersCollection.findOne(filter)
-  if (existUser) {
-    // all ready exist user
-    return res.send(existUser)
-  }
-  // add new user db
-  const options = { upsert: true };
-  const updateDoc = {
-    $set: {
-      ...user,
-      timestamo: Date.now()
-    },
-  };
-  const result = await usersCollection.updateOne(filter, updateDoc, options);
-  res.send(result)
-})
-
+    // add user db
+    app.put("/user", async (req, res) => {
+      const user = req.body
+      const filter = { email: user?.email }
+      // check already exist user
+      const existUser = await usersCollection.findOne(filter)
+      if (existUser) {
+        // all ready exist user
+        return res.send(existUser)
+      }
+      // add new user db
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          ...user,
+          timestamo: Date.now()
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc, options);
+      res.send(result)
+    })
+    // get all users
+    app.get("/all-users/:email", async (req, res) => {
+      const email = req.params.email
+      const query = { email }
+      const adminUser = await usersCollection.findOne(query)
+      if (adminUser.role === "admin") {
+        const result = await usersCollection.find().toArray()
+        res.send(result)
+      }
+    })
+    // create admin user
+    app.patch("/create-add-user/:email", async (req, res) => {
+      const email = req.params.email
+      const adminStatus = req.body
+      const query = { email }
+      console.log(adminStatus.status)
+      const upadteDoc = {
+        $set: { role: adminStatus.status }
+      }
+      const result = await usersCollection.updateOne(query, upadteDoc)
+      res.send(result)
+    })
 
 
 
