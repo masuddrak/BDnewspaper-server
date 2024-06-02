@@ -49,6 +49,7 @@ async function run() {
   try {
     // all collection
     const allNewsCollection = client.db("Newspaper").collection("news");
+    const usersCollection = client.db("Newspaper").collection("users");
     // auth related api
     app.post('/jwt', async (req, res) => {
       const user = req.body
@@ -96,6 +97,7 @@ async function run() {
       const result = await allNewsCollection.findOne(query)
       res.send(result)
     })
+    // increment view count
     app.patch("/add-count/:id", async (req, res) => {
       const id = req.params.id
       const articel=req.body
@@ -111,7 +113,27 @@ async function run() {
       res.send(result)
     })
 
-
+ // add user db
+ app.put("/user", async (req, res) => {
+  const user = req.body
+  const filter = { email: user?.email }
+  // check already exist user
+  const existUser = await usersCollection.findOne(filter)
+  if (existUser) {
+    // all ready exist user
+    return res.send(existUser)
+  }
+  // add new user db
+  const options = { upsert: true };
+  const updateDoc = {
+    $set: {
+      ...user,
+      timestamo: Date.now()
+    },
+  };
+  const result = await usersCollection.updateOne(filter, updateDoc, options);
+  res.send(result)
+})
 
 
 
