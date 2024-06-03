@@ -50,6 +50,7 @@ async function run() {
     // all collection
     const allNewsCollection = client.db("Newspaper").collection("news");
     const usersCollection = client.db("Newspaper").collection("users");
+    const publishersCollection = client.db("Newspaper").collection("publishers");
     // auth related api
     app.post('/jwt', async (req, res) => {
       const user = req.body
@@ -95,6 +96,13 @@ async function run() {
       const id = req.params.id
       const query = { _id: new ObjectId(id) }
       const result = await allNewsCollection.findOne(query)
+      res.send(result)
+    })
+    // delete admin a articel
+    app.delete("/delete-article/:id", async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const result = await allNewsCollection.deleteOne(query)
       res.send(result)
     })
     // my-articles articel
@@ -163,9 +171,51 @@ async function run() {
       const result = await usersCollection.updateOne(query, upadteDoc)
       res.send(result)
     })
-
-
-
+    // is premiu article
+    app.patch("/isPremium/:id",async(req,res)=>{
+      const id=req.params.id
+      const ispremiumStatus=req.body.isPremium
+      const query={_id:new ObjectId(id)}
+      const updateDoc={
+        $set:{isPremium:ispremiumStatus}
+      }
+      const result=await allNewsCollection.updateOne(query,updateDoc)
+      res.send(result)
+    })
+    // approve article
+    app.patch("/approve/:id",async(req,res)=>{
+      const id=req.params.id
+      const approveStatus=req.body.status
+      const query={_id:new ObjectId(id)}
+      const updateDoc={
+        $set:{status:approveStatus}
+      }
+      const result=await allNewsCollection.updateOne(query,updateDoc)
+      res.send(result)
+    })
+    // update decline status
+    app.put("/decline-status/:id",async(req,res)=>{
+      const id=req.params.id
+      const declineCouse=req.body.decline
+      const query={_id:new ObjectId(id)}
+      const options = { upsert: true };
+      const articel=allNewsCollection.findOne(query)
+      if(articel){
+        const updateDoc = {
+          $set: {
+            ...articel,
+            decline: declineCouse
+          },
+        };
+       const result=await allNewsCollection.updateOne(query,updateDoc,options)
+       res.send(result)
+      }
+    })
+    // get all publisher
+    app.get("/publiser", async (req, res) => {
+      const result = await publishersCollection.find().toArray()
+      res.send(result)
+    })
 
 
 
