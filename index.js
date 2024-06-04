@@ -86,9 +86,26 @@ async function run() {
       const result = await allNewsCollection.insertOne(news)
       res.send(result)
     })
+    // update article route
+    app.patch("/update-article/:id", async (req, res) => {
+      const id = req.params.id
+      const news = req.body
+      const query = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: { ...news }
+      }
+      const result = await allNewsCollection.updateOne(query, updateDoc)
+      res.send(result)
+    })
     // get all articel
     app.get("/all-articles", async (req, res) => {
       const result = await allNewsCollection.find().toArray()
+      res.send(result)
+    })
+    // get premium articel
+    app.get("/premium-articles", async (req, res) => {
+      const allNews=await allNewsCollection.find().toArray()
+      const result=allNews.filter(news=>news.isPremium==="premium")
       res.send(result)
     })
     // get a articel
@@ -172,48 +189,53 @@ async function run() {
       res.send(result)
     })
     // is premiu article
-    app.patch("/isPremium/:id",async(req,res)=>{
-      const id=req.params.id
-      const ispremiumStatus=req.body.isPremium
-      const query={_id:new ObjectId(id)}
-      const updateDoc={
-        $set:{isPremium:ispremiumStatus}
+    app.patch("/isPremium/:id", async (req, res) => {
+      const id = req.params.id
+      const ispremiumStatus = req.body.isPremium
+      const query = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: { isPremium: ispremiumStatus }
       }
-      const result=await allNewsCollection.updateOne(query,updateDoc)
+      const result = await allNewsCollection.updateOne(query, updateDoc)
       res.send(result)
     })
     // approve article
-    app.patch("/approve/:id",async(req,res)=>{
-      const id=req.params.id
-      const approveStatus=req.body.status
-      const query={_id:new ObjectId(id)}
-      const updateDoc={
-        $set:{status:approveStatus}
+    app.patch("/approve/:id", async (req, res) => {
+      const id = req.params.id
+      const approveStatus = req.body.status
+      const query = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: { status: approveStatus }
       }
-      const result=await allNewsCollection.updateOne(query,updateDoc)
+      const result = await allNewsCollection.updateOne(query, updateDoc)
       res.send(result)
     })
     // update decline status
-    app.put("/decline-status/:id",async(req,res)=>{
-      const id=req.params.id
-      const declineCouse=req.body.decline
-      const query={_id:new ObjectId(id)}
+    app.put("/decline-status/:id", async (req, res) => {
+      const id = req.params.id
+      const declineCouse = req.body.decline
+      const query = { _id: new ObjectId(id) }
       const options = { upsert: true };
-      const articel=allNewsCollection.findOne(query)
-      if(articel){
+      const articel = allNewsCollection.findOne(query)
+      if (articel) {
         const updateDoc = {
           $set: {
             ...articel,
             decline: declineCouse
           },
         };
-       const result=await allNewsCollection.updateOne(query,updateDoc,options)
-       res.send(result)
+        const result = await allNewsCollection.updateOne(query, updateDoc, options)
+        res.send(result)
       }
     })
     // get all publisher
     app.get("/publiser", async (req, res) => {
       const result = await publishersCollection.find().toArray()
+      res.send(result)
+    })
+    app.post("/add-publiser", async (req, res) => {
+      const publiser = req.body
+      const result = await publishersCollection.insertOne(publiser)
       res.send(result)
     })
 
