@@ -5,7 +5,7 @@ const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 const jwt = require('jsonwebtoken')
-
+const stripe = require("stripe")('sk_test_51PL5mfFwJGWV6jk7AMDaoOYoL0vbndRB5EdlVYxyhrmZMbZHruKUoTTZwFajqlhCxZrVT3texZKLNJT8TIwc6Ea900gatHlK7W');
 const port = process.env.PORT || 5000
 
 // middleware
@@ -51,6 +51,7 @@ async function run() {
     const allNewsCollection = client.db("Newspaper").collection("news");
     const usersCollection = client.db("Newspaper").collection("users");
     const publishersCollection = client.db("Newspaper").collection("publishers");
+    const premiumUsersCollection = client.db("Newspaper").collection("premium-users");
     // auth related api
     app.post('/jwt', async (req, res) => {
       const user = req.body
@@ -104,8 +105,14 @@ async function run() {
     })
     // get premium articel
     app.get("/premium-articles", async (req, res) => {
-      const allNews=await allNewsCollection.find().toArray()
-      const result=allNews.filter(news=>news.isPremium==="premium")
+      const allNews = await allNewsCollection.find().toArray()
+      const result = allNews.filter(news => news.isPremium === "premium")
+      res.send(result)
+    })
+    // slider articles
+    app.get("/slide-articles", async (req, res) => {
+      const allNews = await allNewsCollection.find().toArray()
+      const result = allNews.sort((a, b) => b.viewCount - a.viewCount)
       res.send(result)
     })
     // get a articel
@@ -152,9 +159,29 @@ async function run() {
       // check already exist user
       const existUser = await usersCollection.findOne(filter)
       if (existUser) {
+        // update user status
+        if (user.role === "premium") {
+          const result = await usersCollection.updateOne(filter, { $set: {...user, role: user.role } })
+          return res.send(result)
+        }
         // all ready exist user
         return res.send(existUser)
       }
+      // add new user db
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          ...user,
+          timestamo: Date.now()
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc, options);
+      res.send(result)
+    })
+    // create premium users
+    app.put("/premium-user", async (req, res) => {
+      const user = req.body
+      const filter = { email: user?.email }
       // add new user db
       const options = { upsert: true };
       const updateDoc = {
@@ -238,7 +265,39 @@ async function run() {
       const result = await publishersCollection.insertOne(publiser)
       res.send(result)
     })
+    // publiser calculation
+    app.get("/publisher-count", async (req, res) => {
+      const allPublisher = await allNewsCollection.find().toArray()
+      // const somoyTv= (allPublisher.filter(articel=>articel.publisher ==="Somoy TV")).length
+      // const jamunaTv= (allPublisher.filter(articel=>articel.publisher ==="Jamuna TV")).length
+      // const dbcTv= (allPublisher.filter(articel=>articel.publisher ==="DBC")).length
+      // const tbcTv= (allPublisher.filter(articel=>articel.publisher ==="TBC TV")).length
+      // const machragaTv= (allPublisher.filter(articel=>articel.publisher ==="Machraga TV")).length
+      // const bbcTv= (allPublisher.filter(articel=>articel.publisher ==="BBC TV")).length
+      // const kalbelaTv= (allPublisher.filter(articel=>articel.publisher ==="Kalbela TV")).length
 
+      res.send(allPublisher)
+    })
+
+    // payment
+    app.post("/create-payment-intent", async (req, res) => {
+      const price = req.body?.price;
+      const priceCend = parseFloat(price) * 100
+      if (!price || priceCend < 1) return
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: priceCend,
+        currency: "usd",
+        // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
 
 
 
