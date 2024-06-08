@@ -100,7 +100,10 @@ async function run() {
     })
     // get all articel
     app.get("/all-articles", async (req, res) => {
-      const result = await allNewsCollection.find().toArray()
+      const page = parseInt(req.query.page)
+      const size = parseInt(req.query.size)
+      console.log(page,size)
+      const result = await allNewsCollection.find().skip(page * size).limit(size).toArray()
       res.send(result)
     })
     // total article
