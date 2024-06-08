@@ -103,8 +103,15 @@ async function run() {
       const result = await allNewsCollection.find().toArray()
       res.send(result)
     })
+    // total article
+    app.get("/total-article",async(req,res)=>{
+      const count=await allNewsCollection.estimatedDocumentCount()
+      res.send({count})
+    })
     // get all approve articel
     app.get("/all-approve-articles", async (req, res) => {
+      const page = parseInt(req.query.page)
+      const size = parseInt(req.query.size)
       const sortData = req.query
       const query = {
         title: {
@@ -112,8 +119,8 @@ async function run() {
             $options: "i"
         }
     }
-      console.log(sortData)
-      const allArticle = await allNewsCollection.find().toArray()
+      console.log(page,size)
+      const allArticle = await allNewsCollection.find().skip(page * size).limit(size).toArray()
 
       const approveArticle = allArticle.filter(articel => articel.status === "published")
       
