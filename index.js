@@ -103,6 +103,46 @@ async function run() {
       const result = await allNewsCollection.find().toArray()
       res.send(result)
     })
+    // get all approve articel
+    app.get("/all-approve-articles", async (req, res) => {
+      const sortData = req.query
+      const query = {
+        title: {
+            $regex: sortData.searchText,
+            $options: "i"
+        }
+    }
+      console.log(sortData)
+      const allArticle = await allNewsCollection.find().toArray()
+
+      const approveArticle = allArticle.filter(articel => articel.status === "published")
+      
+       if (sortData.searchText) {
+        const searchAricle = await allNewsCollection.find(query).toArray()
+        return res.send(searchAricle)
+      }
+      else if (sortData.findPublisher === "" && sortData.findTag === "") {
+        return res.send(approveArticle)
+      }
+     
+      else if (sortData.findPublisher && sortData.findTag) {
+        console.log("177")
+        const findPublisherArticle = allArticle.filter(articel => articel.publisher === sortData.findPublisher && (articel.tags).includes(sortData.findTag))
+        return res.send(findPublisherArticle)
+      }
+      else if (sortData.findPublisher) {
+        const findPublisherArticle = allArticle.filter(articel => articel.publisher === sortData.findPublisher)
+        return res.send(findPublisherArticle)
+      }
+      else if (sortData.findTag) {
+        const findTagArticle = allArticle.filter(articel => (articel.tags).includes(sortData.findTag))
+        return res.send(findTagArticle)
+      }
+
+    })
+
+
+
     // get premium articel
     app.get("/premium-articles", async (req, res) => {
       const allNews = await allNewsCollection.find().toArray()
@@ -113,7 +153,8 @@ async function run() {
     app.get("/slide-articles", async (req, res) => {
       const allNews = await allNewsCollection.find().toArray()
       const result = allNews.sort((a, b) => b.viewCount - a.viewCount)
-      res.send(result)
+      const slideArticle = result.slice(0, 6)
+      res.send(slideArticle)
     })
     // get a articel
     app.get("/article-details/:id", async (req, res) => {
@@ -161,7 +202,7 @@ async function run() {
       if (existUser) {
         // update user status
         if (user.role === "premium") {
-          const result = await usersCollection.updateOne(filter, { $set: {...user, role: user.role } })
+          const result = await usersCollection.updateOne(filter, { $set: { ...user, role: user.role } })
           return res.send(result)
         }
         // all ready exist user
@@ -176,6 +217,23 @@ async function run() {
         },
       };
       const result = await usersCollection.updateOne(filter, updateDoc, options);
+      res.send(result)
+    })
+    // user Counter
+    app.get("/user-counter", async (req, res) => {
+      const allUser = await usersCollection.find().toArray()
+      const totalUser = allUser.length
+      const premiumUser = allUser.filter(user => user.role === "premium").length
+      const freeUser = allUser.filter(user => user.role === "free").length
+      res.send({ totalUser, premiumUser, freeUser })
+
+    })
+    // single user
+    app.get("/single-user/:email", async (req, res) => {
+      const email = req.params.email
+      console.log(email)
+      const query = { email }
+      const result = await usersCollection.findOne(query)
       res.send(result)
     })
     // create premium users
@@ -264,6 +322,25 @@ async function run() {
       const publiser = req.body
       const result = await publishersCollection.insertOne(publiser)
       res.send(result)
+    })
+    app.put("/increment-publisher/:publisher", async (req, res) => {
+      const publisher = req.params.publisher
+      const addCount = req.body
+      const query = { name: publisher }
+      const filterPublisher = await publishersCollection.findOne(query)
+      if (filterPublisher?.totalCount) {
+        const updateDoc = {
+          $set: { ...filterPublisher, totalCount: filterPublisher?.totalCount + 1 }
+        }
+        const result = await publishersCollection.updateOne(query, updateDoc)
+        return res.send(result)
+      }
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: { totalCount: 0 + addCount.total }
+      }
+      const result = await publishersCollection.updateOne(query, updateDoc, options)
+      return res.send(result)
     })
     // publiser calculation
     app.get("/publisher-count", async (req, res) => {
