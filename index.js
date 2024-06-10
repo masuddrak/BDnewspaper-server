@@ -5,12 +5,12 @@ const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 const jwt = require('jsonwebtoken')
-const stripe = require("stripe")('sk_test_51PL5mfFwJGWV6jk7AMDaoOYoL0vbndRB5EdlVYxyhrmZMbZHruKUoTTZwFajqlhCxZrVT3texZKLNJT8TIwc6Ea900gatHlK7W');
+const stripe = require("stripe")(process.env.ACCESS_PAYMEN_SECRET);
 const port = process.env.PORT || 5000
 
 // middleware
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: ['http://localhost:5173', 'http://localhost:5174','https://newspaper-5c966.web.app','https://newspaper-5c966.firebaseapp.com'],
   credentials: true,
   optionSuccessStatus: 200,
 }
